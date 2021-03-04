@@ -8,7 +8,9 @@
 import SQLite3
 import Foundation
 
-public typealias RowHandler = (AnySequence<(column: String?, value: String?)>) -> Void
+public typealias RowHandler = (Row) -> Void
+public typealias Column = (name: String?, value: String?)
+public typealias Row = LazyMapSequence<LazySequence<(Range<Int>)>.Elements, Column>
 
 open class SQLiteDatabase {
     
@@ -49,7 +51,7 @@ open class SQLiteDatabase {
                 
                 let row = (0..<Int(columnCount))
                     .lazy
-                    .map { index -> (column: String?, value: String?) in
+                    .map { index -> Column in
                         let column = columns.flatMap { $0[index] }
                             .map { String(cString: $0) }
                         let value = values.flatMap { $0[index] }
@@ -59,7 +61,7 @@ open class SQLiteDatabase {
                 
                 rowHandler
                     .map { $0.load(as: RowHandler.self) }
-                    .map { $0(AnySequence(row)) }
+                    .map { $0(row) }
                         
                 
                 
