@@ -11,11 +11,12 @@ import Foundation
 public typealias RowsHandler = (((String, String) -> Void) -> Void) -> Void
 private var handlers = [UUID: RowsHandler]()
 
-public class SQLiteDatabase {
+open class SQLiteDatabase {
     
     public let fileURL: URL
     private var connection: OpaquePointer?
-    var isOpened: Bool {
+    
+    public var isOpened: Bool {
         connection != nil
     }
     
