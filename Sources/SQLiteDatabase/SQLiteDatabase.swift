@@ -8,7 +8,7 @@
 import SQLite3
 import Foundation
 
-public typealias RowHandler = (Row) -> Void
+public typealias RowHandler = (Row) throws -> Void
 public typealias Column = (name: String?, value: String?)
 public typealias Row = LazyMapSequence<LazySequence<(Range<Int>)>.Elements, Column>
 
@@ -43,11 +43,17 @@ open class SQLiteDatabase {
         let errorMessagePointer: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>! = withUnsafeMutablePointer(to: &errorMessage) {
             $0
         }
-        
-        var rowHandler = rowHandler
+        typealias Context = (rowHandler: RowHandler, errorHandler: (Swift.Error) -> Void)
+        var userError: Swift.Error?
+        var context: Context = (
+            rowHandler: rowHandler,
+            errorHandler: { (error: Swift.Error) in
+                userError = error
+            }
+        )
 
-        let state = withUnsafeMutablePointer(to: &rowHandler) { rowHandler in
-            return sqlite3_exec(connection, statement, { rowHandler, columnCount, values, columns in
+        let state = withUnsafeMutablePointer(to: &context) { context in
+            return sqlite3_exec(connection, statement, { context, columnCount, values, columns in
                 
                 let row = (0..<Int(columnCount))
                     .lazy
@@ -58,16 +64,19 @@ open class SQLiteDatabase {
                             .map { String(cString: $0) }
                         return (column, value)
                     }
+                let context = context.map({ $0.load(as: Context.self) })!
+                do {
+                    try context.rowHandler(row)
+                    return SQLITE_OK
+                } catch {
+                    context.errorHandler(error)
+                    return SQLITE_ERROR
+                }
                 
-                rowHandler
-                    .map { $0.load(as: RowHandler.self) }
-                    .map { $0(row) }
-                        
-                
-                
-                return SQLITE_OK
-            }, rowHandler, errorMessagePointer)
+            }, context, errorMessagePointer)
         }
+        
+        try userError.map { throw $0 }
         
         let message = errorMessagePointer
             .flatMap { $0.pointee }
