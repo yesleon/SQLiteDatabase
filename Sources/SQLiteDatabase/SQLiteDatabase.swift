@@ -39,21 +39,21 @@ open class SQLiteDatabase {
     public func open() throws {
         try queue.sync {
             let state = sqlite3_open(fileURL.path, &connection)
-            try Error(state).map { throw $0 }
+            try Error(resultCode: state).map { throw $0 }
         }
     }
     
     public func close() throws {
         try queue.sync {
             let state = sqlite3_close(connection)
-            try Error(state).map { throw $0 }
+            try Error(resultCode: state).map { throw $0 }
         }
         
     }
     
     public func query(_ statement: String) -> Query {
         return Query { [weak self] rowHandler in
-            guard let self = self else { throw Error(SQLITE_MISUSE, message: "Database does not exist.")! }
+            guard let self = self else { throw Error(resultCode: SQLITE_MISUSE, message: "Database does not exist.", statement: statement)! }
             return try self.queue.sync {
                 var errorMessage: UnsafeMutablePointer<Int8>! = "".withCString {
                     UnsafeMutablePointer(mutating: $0)
@@ -105,7 +105,7 @@ open class SQLiteDatabase {
                     .flatMap { $0.pointee }
                     .map { String(cString: $0) }
                 
-                try Error(state, message: message).map { throw $0 }
+                try Error(resultCode: state, message: message, statement: statement).map { throw $0 }
             }
         }
         
