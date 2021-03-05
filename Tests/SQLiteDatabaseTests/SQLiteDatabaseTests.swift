@@ -20,7 +20,7 @@ final class SQLiteDatabaseTests: XCTestCase {
         var b = a
         b.from = "g"
         
-        let h = SelectStatementComponents(sentences: [a, b])
+        let h = SelectStatement(sentences: [a, b])
         print(h.string)
     }
 

@@ -9,9 +9,6 @@ import SQLite3
 import Foundation
 
 public typealias RowHandler = (Row) throws -> Void
-public struct Query {
-    public let execute: (@escaping (Row) throws -> Void) throws -> Void
-}
 public struct Column {
     public let name: String?
     public let value: String?
@@ -23,8 +20,8 @@ public struct Row {
 open class SQLiteDatabase {
     
     public let fileURL: URL
-    let queue: DispatchQueue
-    private var connection: OpaquePointer?
+    public let queue: DispatchQueue
+    var connection: OpaquePointer?
     
     public var isOpened: Bool {
         connection != nil
@@ -50,63 +47,12 @@ open class SQLiteDatabase {
         
     }
     
-    public func query(_ statement: String) -> Query {
-        return Query { [weak self] rowHandler in
-            guard let self = self else { throw Error(resultCode: SQLITE_MISUSE, message: "Database does not exist.", statement: statement)! }
-            return try self.queue.sync {
-                var errorMessage: UnsafeMutablePointer<Int8>! = "".withCString {
-                    UnsafeMutablePointer(mutating: $0)
-                }
-                
-                let errorMessagePointer: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>! = withUnsafeMutablePointer(to: &errorMessage) {
-                    $0
-                }
-                typealias Context = (rowHandler: RowHandler, errorHandler: (Swift.Error) -> Void)
-                var userError: Swift.Error?
-                var context: Context = (
-                    rowHandler: rowHandler,
-                    errorHandler: { (error: Swift.Error) in
-                        userError = error
-                    }
-                )
-                
-                let state = withUnsafeMutablePointer(to: &context) { context in
-                    return sqlite3_exec(self.connection, statement, { context, columnCount, values, columns in
-                        
-                        
-                        let context = context.map({ $0.load(as: Context.self) })!
-                        do {
-                            
-                            let row = Row { columnHandler in
-                                
-                                try (0..<Int(columnCount))
-                                    .forEach { index in
-                                        let column = columns.flatMap { $0[index] }
-                                            .map { String(cString: $0) }
-                                        let value = values.flatMap { $0[index] }
-                                            .map { String(cString: $0) }
-                                        try columnHandler(Column(name: column, value: value))
-                                    }
-                            }
-                            try context.rowHandler(row)
-                            return SQLITE_OK
-                        } catch {
-                            context.errorHandler(error)
-                            return SQLITE_ERROR
-                        }
-                        
-                    }, context, errorMessagePointer)
-                }
-                
-                try userError.map { throw $0 }
-                
-                let message = errorMessagePointer
-                    .flatMap { $0.pointee }
-                    .map { String(cString: $0) }
-                
-                try Error(resultCode: state, message: message, statement: statement).map { throw $0 }
-            }
-        }
+    public func query(_ statement: Statement) -> Query {
+        return Query(rawStatement: statement.string, in: self)
+    }
+    
+    public func query(_ rawStatement: String) -> Query {
+        return Query(rawStatement: rawStatement, in: self)
         
     }
 }

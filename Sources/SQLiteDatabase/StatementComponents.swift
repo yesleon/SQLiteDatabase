@@ -9,6 +9,9 @@ public enum Operator: String {
     case like = "LIKE"
     case equals = "="
 }
+public protocol Statement {
+    var string: String { get }
+}
 
 public struct Where {
     public init(_ conditions: [Condition], isAnd: Bool) {
@@ -80,7 +83,7 @@ public enum UnionType: String {
     case union = "UNION", unionAll = "UNION ALL"
 }
 
-public struct SelectStatementComponents {
+public struct SelectStatement: Statement {
     public init(sentences: [Sentence], unionType: UnionType = .union) {
         self.sentences = sentences
         self.unionType = unionType
