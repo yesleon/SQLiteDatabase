@@ -58,19 +58,18 @@ public struct Query {
                 
                 let state = withUnsafeMutablePointer(to: &context) { context in
                     return sqlite3_exec(database?.connection, statement, { context, columnCount, values, columns in
-                        
+                        let columnCount = Int(columnCount)
                         let context = context!.load(as: Context.self)
                         
                         do {
                             let row = Row { columnHandler in
-                                try (0..<Int(columnCount))
-                                    .forEach { index in
-                                        var column = Column(
-                                            nameCString: columns?[index],
-                                            valueCString: values?[index]
-                                        )
-                                        try columnHandler(&column)
-                                    }
+                                for index in 0..<columnCount {
+                                    var column = Column(
+                                        nameCString: columns?[index],
+                                        valueCString: values?[index]
+                                    )
+                                    try columnHandler(&column)
+                                }
                             }
                             try context.rowHandler(row)
                             return SQLITE_OK
