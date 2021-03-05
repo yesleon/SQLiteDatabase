@@ -10,7 +10,7 @@ import Foundation
 
 public typealias RowHandler = (Row) throws -> Void
 public struct Query {
-    public let forEachRow: (@escaping (Row) throws -> Void) throws -> Void
+    public let execute: (@escaping (Row) throws -> Void) throws -> Void
 }
 public struct Column {
     public let name: String?
