@@ -18,8 +18,18 @@ public struct Row {
 public struct Column {
     let nameCString: UnsafeMutablePointer<Int8>?
     let valueCString: UnsafeMutablePointer<Int8>?
-    public private(set) lazy var name: String? = nameCString.flatMap { String(cString: $0) }
-    public private(set) lazy var value: String? = valueCString.flatMap { String(cString: $0) }
+    lazy var unwrappedName: String? = nameCString.flatMap { String(cString: $0) }
+    lazy var unwrappedValue: String? = valueCString.flatMap { String(cString: $0) }
+    var name: String? {
+        mutating get {
+            unwrappedName
+        }
+    }
+    var value: String? {
+        mutating get {
+            unwrappedValue
+        }
+    }
 }
 
 public struct Query {
