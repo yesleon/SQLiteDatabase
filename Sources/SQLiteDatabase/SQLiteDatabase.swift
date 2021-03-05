@@ -38,8 +38,8 @@ open class SQLiteDatabase {
         
     }
     
-    public func query(_ rawStatement: String) -> Query {
-        return Query(rawStatement: rawStatement, in: self)
+    public func query(_ statement: String) -> Query {
+        return Query(statement: statement, in: self)
         
     }
 }
