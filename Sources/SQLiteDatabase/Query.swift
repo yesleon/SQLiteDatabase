@@ -40,13 +40,13 @@ public struct Query {
         self.execute = { [weak database] rowHandler in
             guard let database = database else { throw Error(resultCode: SQLITE_MISUSE, message: "Database does not exist.", statement: statement)! }
             try database.queue.sync { [weak database] in
-                var errorMessage: UnsafeMutablePointer<Int8>! = "".withCString {
-                    UnsafeMutablePointer(mutating: $0)
-                }
                 
-                let errorMessagePointer: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>! = withUnsafeMutablePointer(to: &errorMessage) {
-                    $0
-                }
+                var errorMessage: UnsafeMutablePointer<Int8>!
+                    = "".withCString { UnsafeMutablePointer(mutating: $0) }
+                
+                let errorMessagePointer: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>!
+                    = withUnsafeMutablePointer(to: &errorMessage) { $0 }
+                
                 typealias Context = (rowHandler: RowHandler, errorHandler: (Swift.Error) -> Void)
                 var userError: Swift.Error?
                 var context: Context = (
@@ -59,12 +59,10 @@ public struct Query {
                 let state = withUnsafeMutablePointer(to: &context) { context in
                     return sqlite3_exec(database?.connection, statement, { context, columnCount, values, columns in
                         
+                        let context = context!.load(as: Context.self)
                         
-                        let context = context.map({ $0.load(as: Context.self) })!
                         do {
-                            
                             let row = Row { columnHandler in
-                                
                                 try (0..<Int(columnCount))
                                     .forEach { index in
                                         var column = Column(
