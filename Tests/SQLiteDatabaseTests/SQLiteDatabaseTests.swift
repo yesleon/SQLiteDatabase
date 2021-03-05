@@ -14,23 +14,9 @@ final class SQLiteDatabaseTests: XCTestCase {
         // results.
 //        XCTAssertEqual(SQLiteDatabase().text, "Hello, World!")
         
-            
-        let expectation = self.expectation(description: "================")
-        expectation.assertForOverFulfill = false
-        
-        try! self.database.open()
-        
-        
-        try! self.database.query("").execute { row in
-            try row.forEachColumn { column in
-                
-            }
-        }
-        
-        waitForExpectations(timeout: 1) { error in
-            error.map { print($0) }
-        }
-        
+        var a = SelectStatementComponents(select: ["a"], from: "b")
+        a.where = .init([.init("c", .equals, "d"), .init("e", .like, "f")], isAnd: true)
+        print(a.statement)
         
     }
 

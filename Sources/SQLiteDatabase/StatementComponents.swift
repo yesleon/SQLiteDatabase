@@ -10,6 +10,26 @@ public enum Operator: String {
     case equals = "="
 }
 
+public struct Where {
+    public init(_ conditions: [Condition], isAnd: Bool) {
+        self.conditions = conditions
+        self.isAnd = isAnd
+    }
+    
+    public var conditions: [Condition]
+    public var isAnd: Bool
+    public var string: String {
+        var string = ""
+        if !conditions.isEmpty {
+            string += " WHERE "
+            string += conditions
+                .map { $0.string }
+                .joined(separator: " \(isAnd ? "AND" : "OR") ")
+        }
+        return string
+    }
+}
+
 public struct Condition {
     public init(_ column: String, _ operator: Operator, _ content: String) {
         self.column = column
@@ -42,7 +62,7 @@ public struct Order {
 public struct SelectStatementComponents {
     public var select: [String]
     public var from: String
-    public var `where` = [Condition]()
+    public var `where` = Where([], isAnd: false)
     public var orderBy = [Order]()
     
     public var limit: Int?
@@ -51,12 +71,7 @@ public struct SelectStatementComponents {
         
         statement += "SELECT \(select.joined(separator: ", "))"
         statement += " FROM \(from)"
-        if !`where`.isEmpty {
-            statement += " WHERE"
-            `where`.forEach {
-                statement += " " + $0.string
-            }
-        }
+        statement += `where`.string
         if !orderBy.isEmpty {
             
             statement += " ORDER BY"
