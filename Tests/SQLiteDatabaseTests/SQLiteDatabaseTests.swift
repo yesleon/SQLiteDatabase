@@ -21,7 +21,7 @@ final class SQLiteDatabaseTests: XCTestCase {
         try! self.database.open()
         
         
-        try! self.database.execute("").forEachRow { row in
+        try! self.database.query("").execute { row in
             try row.forEachColumn { column in
                 
             }

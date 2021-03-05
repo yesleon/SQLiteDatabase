@@ -53,7 +53,7 @@ open class SQLiteDatabase {
     
     public func query(_ statement: String) -> Query {
         return Query { [weak self] rowHandler in
-            guard let self = self else { return }
+            guard let self = self else { throw Error(SQLITE_MISUSE, message: "Database does not exist.")! }
             return try self.queue.sync {
                 var errorMessage: UnsafeMutablePointer<Int8>! = "".withCString {
                     UnsafeMutablePointer(mutating: $0)
