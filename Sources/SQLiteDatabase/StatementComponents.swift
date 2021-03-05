@@ -7,6 +7,7 @@
 
 enum Operator: String {
     case like = "LIKE"
+    case equal = "="
 }
 
 public struct Condition {
