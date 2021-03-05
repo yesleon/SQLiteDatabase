@@ -8,15 +8,6 @@
 import SQLite3
 import Foundation
 
-public typealias RowHandler = (Row) throws -> Void
-public struct Column {
-    public let name: String?
-    public let value: String?
-}
-public struct Row {
-    public let forEachColumn: ((Column) throws -> Void) throws -> Void
-}
-
 open class SQLiteDatabase {
     
     public let fileURL: URL
@@ -45,10 +36,6 @@ open class SQLiteDatabase {
             try Error(resultCode: state).map { throw $0 }
         }
         
-    }
-    
-    public func query(_ statement: Statement) -> Query {
-        return Query(rawStatement: statement.string, in: self)
     }
     
     public func query(_ rawStatement: String) -> Query {

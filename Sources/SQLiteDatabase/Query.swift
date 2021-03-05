@@ -8,13 +8,27 @@
 import Foundation
 import SQLite3
 
-public struct Query {
-    public let execute: (@escaping (Row) throws -> Void) throws -> Void
+public typealias RowHandler = (Row) throws -> Void
+public typealias ColumnHandler = (Column) throws -> Void
 
-    public init(rawStatement: String, in database: SQLiteDatabase?) {
+public struct Row {
+    public let forEachColumn: (ColumnHandler) throws -> Void
+}
+
+public struct Column {
+    let nameCString: UnsafeMutablePointer<Int8>?
+    let valueCString: UnsafeMutablePointer<Int8>?
+    public private(set) lazy var name: String? = nameCString.flatMap { String(cString: $0) }
+    public private(set) lazy var value: String? = valueCString.flatMap { String(cString: $0) }
+}
+
+public struct Query {
+    public let execute: (@escaping RowHandler) throws -> Void
+
+    public init(statement: String, in database: SQLiteDatabase?) {
 
         self.execute = { [weak database] rowHandler in
-            guard let database = database else { throw Error(resultCode: SQLITE_MISUSE, message: "Database does not exist.", statement: rawStatement)! }
+            guard let database = database else { throw Error(resultCode: SQLITE_MISUSE, message: "Database does not exist.", statement: statement)! }
             try database.queue.sync { [weak database] in
                 var errorMessage: UnsafeMutablePointer<Int8>! = "".withCString {
                     UnsafeMutablePointer(mutating: $0)
@@ -33,7 +47,7 @@ public struct Query {
                 )
                 
                 let state = withUnsafeMutablePointer(to: &context) { context in
-                    return sqlite3_exec(database?.connection, rawStatement, { context, columnCount, values, columns in
+                    return sqlite3_exec(database?.connection, statement, { context, columnCount, values, columns in
                         
                         
                         let context = context.map({ $0.load(as: Context.self) })!
@@ -43,11 +57,11 @@ public struct Query {
                                 
                                 try (0..<Int(columnCount))
                                     .forEach { index in
-                                        let column = columns.flatMap { $0[index] }
-                                            .map { String(cString: $0) }
-                                        let value = values.flatMap { $0[index] }
-                                            .map { String(cString: $0) }
-                                        try columnHandler(Column(name: column, value: value))
+                                        let column = Column(
+                                            nameCString: columns?[index],
+                                            valueCString: values?[index]
+                                        )
+                                        try columnHandler(column)
                                     }
                             }
                             try context.rowHandler(row)
@@ -66,7 +80,7 @@ public struct Query {
                     .flatMap { $0.pointee }
                     .map { String(cString: $0) }
                 
-                try Error(resultCode: state, message: message, statement: rawStatement).map { throw $0 }
+                try Error(resultCode: state, message: message, statement: statement).map { throw $0 }
             }
         }
     }
