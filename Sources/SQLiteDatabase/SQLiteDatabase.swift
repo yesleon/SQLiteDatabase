@@ -67,16 +67,13 @@ open class SQLiteDatabase {
                     do {
 //                        try context.rowHandler(row)
                         try (0..<Int(columnCount))
-                            .map { index -> Column in
+                            .forEach { index in
                                 let column = columns.flatMap { $0[index] }
                                     .map { String(cString: $0) }
                                 let value = values.flatMap { $0[index] }
                                     .map { String(cString: $0) }
-                                return (column, value)
-                            }
-                            .forEach { column in
                                 try context.rowHandler { columnHandler in
-                                    columnHandler(column)
+                                    columnHandler((column, value))
                                 }
                             }
                         return SQLITE_OK
