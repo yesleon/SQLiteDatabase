@@ -7,7 +7,7 @@
 
 public enum Operator: String {
     case like = "LIKE"
-    case equal = "="
+    case equals = "="
 }
 
 public struct Condition {
@@ -17,11 +17,24 @@ public struct Condition {
         self.content = content
     }
     
-    var column: String
-    var `operator`: Operator
-    var content: String
-    var string: String {
+    public var column: String
+    public var `operator`: Operator
+    public var content: String
+    public var string: String {
         return [column, `operator`.rawValue, content].joined(separator: " ")
+    }
+}
+
+public struct Order {
+    public init(by column: String, ascending: Bool) {
+        self.column = column
+        self.ascending = ascending
+    }
+    
+    public var column: String
+    public var ascending: Bool
+    public var string: String {
+        return [column, ascending ? "ASC" : "DESC"].joined(separator: " ")
     }
 }
 
@@ -30,8 +43,8 @@ public struct SelectStatementComponents {
     public var select: [String]
     public var from: String
     public var `where` = [Condition]()
-    public var orderBy: String?
-    public var ascending = true
+    public var orderBy = [Order]()
+    
     public var limit: Int?
     public var statement: String {
         var statement = ""
@@ -44,9 +57,12 @@ public struct SelectStatementComponents {
                 statement += " " + $0.string
             }
         }
-        orderBy.map {
-            statement += " ORDER BY \($0)"
-            statement += ascending ? " ASC" : " DESC"
+        if !orderBy.isEmpty {
+            
+            statement += " ORDER BY"
+            orderBy.forEach {
+                statement += " " + $0.string
+            }
         }
         limit.map { statement += " LIMIT \($0)" }
         statement += ";"
