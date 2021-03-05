@@ -41,6 +41,63 @@ open class SQLiteDatabase {
         }
     }
     
+    public func execute2(_ statement: String, rowHandler: @escaping (((Column) -> Void) -> Void) throws -> Void) throws {
+        try queue.sync {
+            var errorMessage: UnsafeMutablePointer<Int8>! = "".withCString {
+                UnsafeMutablePointer(mutating: $0)
+            }
+            
+            let errorMessagePointer: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>! = withUnsafeMutablePointer(to: &errorMessage) {
+                $0
+            }
+            typealias Context = (rowHandler: ((((Column) -> Void)) -> Void) throws -> Void, errorHandler: (Swift.Error) -> Void)
+            var userError: Swift.Error?
+            var context: Context = (
+                rowHandler: rowHandler,
+                errorHandler: { (error: Swift.Error) in
+                    userError = error
+                }
+            )
+            
+            let state = withUnsafeMutablePointer(to: &context) { context in
+                return sqlite3_exec(connection, statement, { context, columnCount, values, columns in
+                    
+                    
+                    let context = context.map({ $0.load(as: Context.self) })!
+                    do {
+//                        try context.rowHandler(row)
+                        try (0..<Int(columnCount))
+                            .map { index -> Column in
+                                let column = columns.flatMap { $0[index] }
+                                    .map { String(cString: $0) }
+                                let value = values.flatMap { $0[index] }
+                                    .map { String(cString: $0) }
+                                return (column, value)
+                            }
+                            .forEach { column in
+                                try context.rowHandler { columnHandler in
+                                    columnHandler(column)
+                                }
+                            }
+                        return SQLITE_OK
+                    } catch {
+                        context.errorHandler(error)
+                        return SQLITE_ERROR
+                    }
+                    
+                }, context, errorMessagePointer)
+            }
+            
+            try userError.map { throw $0 }
+            
+            let message = errorMessagePointer
+                .flatMap { $0.pointee }
+                .map { String(cString: $0) }
+            
+            try Error(state, message: message).map { throw $0 }
+        }
+    }
+    
     public func execute(_ statement: String, rowHandler: @escaping RowHandler) throws {
         try queue.sync {
             var errorMessage: UnsafeMutablePointer<Int8>! = "".withCString {
