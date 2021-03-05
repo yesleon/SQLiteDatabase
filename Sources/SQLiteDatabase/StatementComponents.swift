@@ -12,13 +12,17 @@ public struct StatementComponents {
     public var select: String
     public var from: String
     public var `where`: String?
+    public var like: String?
     public var orderBy: String?
     public var limit: Int?
     public var statement: String {
         var statement = ""
         statement += "SELECT \(select)"
         statement += " FROM \(from)"
-        `where`.map { statement += " WHERE \($0)" }
+        `where`.map {
+            statement += " WHERE \($0)"
+            like.map { statement += " LIKE \($0)" }
+        }
         orderBy.map { statement += " ORDER BY \($0)" }
         limit.map { statement += " LIMIT \($0)" }
         statement += ";"
