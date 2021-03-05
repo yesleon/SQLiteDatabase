@@ -88,16 +88,20 @@ public struct Sentence {
     }
 }
 
+public enum UnionType: String {
+    case union = "UNION", unionAll = "UNION ALL"
+}
 
 public struct SelectStatementComponents {
-    public init(sentences: [Sentence]) {
+    public init(sentences: [Sentence], unionType: UnionType = .union) {
         self.sentences = sentences
+        self.unionType = unionType
     }
-    
+    public var unionType: UnionType
     public var sentences: [Sentence]
     public var string: String {
         return sentences
             .map { $0.string }
-            .joined(separator: " UNION ") + ";"
+            .joined(separator: " \(unionType.rawValue) ") + ";"
     }
 }
