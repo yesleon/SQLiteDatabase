@@ -62,24 +62,12 @@ public struct Sentence {
     public var select: [String]
     public var from: String
     public var `where` = Where([], isAnd: false)
-    public var orderBy = [Order]()
-    
-    public var limit: Int?
     public var string: String {
-        var string = "("
+        var string = ""
         
         string += "SELECT \(select.joined(separator: ", "))"
         string += " FROM \(from)"
         string += `where`.string
-        if !orderBy.isEmpty {
-            
-            string += " ORDER BY"
-            orderBy.forEach {
-                string += " " + $0.string
-            }
-        }
-        limit.map { string += " LIMIT \($0)" }
-        string += ")"
         return string
     }
     public init(select: [String], from: String) {
@@ -99,9 +87,22 @@ public struct SelectStatementComponents {
     }
     public var unionType: UnionType
     public var sentences: [Sentence]
+    public var orderBy = [Order]()
+    public var limit: Int?
     public var string: String {
-        return sentences
+        var string = sentences
             .map { $0.string }
-            .joined(separator: " \(unionType.rawValue) ") + ";"
+            .joined(separator: " \(unionType.rawValue) ")
+        
+        if !orderBy.isEmpty {
+            
+            string += " ORDER BY"
+            orderBy.forEach {
+                string += " " + $0.string
+            }
+        }
+        limit.map { string += " LIMIT \($0)" }
+        string += ";"
+        return string
     }
 }
