@@ -11,6 +11,12 @@ enum Operator: String {
 }
 
 public struct Condition {
+    public init(column: String, operator: Operator, text: String) {
+        self.column = column
+        self.operator = operator
+        self.text = text
+    }
+    
     var column: String
     var `operator`: Operator
     var text: String
