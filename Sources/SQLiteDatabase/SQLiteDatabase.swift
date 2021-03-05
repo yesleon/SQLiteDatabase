@@ -20,7 +20,6 @@ public struct Row {
     public let forEachColumn: ((Column) throws -> Void) throws -> Void
 }
 
-
 open class SQLiteDatabase {
     
     public let fileURL: URL
