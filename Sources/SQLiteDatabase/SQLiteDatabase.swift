@@ -41,7 +41,7 @@ open class SQLiteDatabase {
         }
     }
     
-    public func execute2(_ statement: String, rowHandler: @escaping (((Column) -> Void) -> Void) throws -> Void) throws {
+    public func execute2(_ statement: String, rowHandler: @escaping (((Column) throws -> Void) throws -> Void) throws -> Void) throws {
         try queue.sync {
             var errorMessage: UnsafeMutablePointer<Int8>! = "".withCString {
                 UnsafeMutablePointer(mutating: $0)
@@ -50,7 +50,7 @@ open class SQLiteDatabase {
             let errorMessagePointer: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>! = withUnsafeMutablePointer(to: &errorMessage) {
                 $0
             }
-            typealias Context = (rowHandler: ((((Column) -> Void)) -> Void) throws -> Void, errorHandler: (Swift.Error) -> Void)
+            typealias Context = (rowHandler: ((((Column) throws -> Void)) throws -> Void) throws -> Void, errorHandler: (Swift.Error) -> Void)
             var userError: Swift.Error?
             var context: Context = (
                 rowHandler: rowHandler,
@@ -65,17 +65,17 @@ open class SQLiteDatabase {
                     
                     let context = context.map({ $0.load(as: Context.self) })!
                     do {
-//                        try context.rowHandler(row)
-                        try (0..<Int(columnCount))
-                            .forEach { index in
-                                let column = columns.flatMap { $0[index] }
-                                    .map { String(cString: $0) }
-                                let value = values.flatMap { $0[index] }
-                                    .map { String(cString: $0) }
-                                try context.rowHandler { columnHandler in
-                                    columnHandler((column, value))
+                        //                        try context.rowHandler(row)
+                        try context.rowHandler { columnHandler in
+                            try (0..<Int(columnCount))
+                                .forEach { index in
+                                    let column = columns.flatMap { $0[index] }
+                                        .map { String(cString: $0) }
+                                    let value = values.flatMap { $0[index] }
+                                        .map { String(cString: $0) }
+                                    try columnHandler((column, value))
                                 }
-                            }
+                        }
                         return SQLITE_OK
                     } catch {
                         context.errorHandler(error)
