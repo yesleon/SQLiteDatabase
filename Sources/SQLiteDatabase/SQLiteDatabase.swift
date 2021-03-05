@@ -9,17 +9,15 @@ import SQLite3
 import Foundation
 
 public typealias RowHandler = (Row) throws -> Void
-//public typealias Column = (name: String?, value: String?)
-//public typealias Row = LazyMapSequence<LazySequence<(Range<Int>)>.Elements, Column>
 public struct QueryResult {
-    let forEachRow: (@escaping (Row) throws -> Void) throws -> Void
+    public let forEachRow: (@escaping (Row) throws -> Void) throws -> Void
 }
 public struct Column {
     public let name: String?
     public let value: String?
 }
 public struct Row {
-    let forEachColumn: ((Column) throws -> Void) throws -> Void
+    public let forEachColumn: ((Column) throws -> Void) throws -> Void
 }
 
 
