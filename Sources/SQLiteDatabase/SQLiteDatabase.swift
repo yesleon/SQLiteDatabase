@@ -9,7 +9,7 @@ import SQLite3
 import Foundation
 
 public typealias RowHandler = (Row) throws -> Void
-public struct QueryResult {
+public struct Query {
     public let forEachRow: (@escaping (Row) throws -> Void) throws -> Void
 }
 public struct Column {
@@ -51,10 +51,8 @@ open class SQLiteDatabase {
         
     }
     
-    public func execute(_ statement: String) -> QueryResult {
-        
-        
-        return QueryResult { [weak self] rowHandler in
+    public func query(_ statement: String) -> Query {
+        return Query { [weak self] rowHandler in
             guard let self = self else { return }
             return try self.queue.sync {
                 var errorMessage: UnsafeMutablePointer<Int8>! = "".withCString {
