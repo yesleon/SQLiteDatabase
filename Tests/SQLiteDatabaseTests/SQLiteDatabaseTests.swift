@@ -20,8 +20,11 @@ final class SQLiteDatabaseTests: XCTestCase {
         
         try! self.database.open()
         
-        try! self.database.execute("") { row in
-            expectation.fulfill()
+        
+        try! self.database.execute("").forEachRow { row in
+            try row.forEachColumn { column in
+                
+            }
         }
         
         waitForExpectations(timeout: 1) { error in
