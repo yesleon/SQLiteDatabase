@@ -58,33 +58,46 @@ public struct Order {
     }
 }
 
-
-public struct SelectStatementComponents {
+public struct Sentence {
     public var select: [String]
     public var from: String
     public var `where` = Where([], isAnd: false)
     public var orderBy = [Order]()
     
     public var limit: Int?
-    public var statement: String {
-        var statement = ""
+    public var string: String {
+        var string = "("
         
-        statement += "SELECT \(select.joined(separator: ", "))"
-        statement += " FROM \(from)"
-        statement += `where`.string
+        string += "SELECT \(select.joined(separator: ", "))"
+        string += " FROM \(from)"
+        string += `where`.string
         if !orderBy.isEmpty {
             
-            statement += " ORDER BY"
+            string += " ORDER BY"
             orderBy.forEach {
-                statement += " " + $0.string
+                string += " " + $0.string
             }
         }
-        limit.map { statement += " LIMIT \($0)" }
-        statement += ";"
-        return statement
+        limit.map { string += " LIMIT \($0)" }
+        string += ")"
+        return string
     }
     public init(select: [String], from: String) {
         self.select = select
         self.from = from
+    }
+}
+
+
+public struct SelectStatementComponents {
+    public init(sentences: [Sentence]) {
+        self.sentences = sentences
+    }
+    
+    public var sentences: [Sentence]
+    public var string: String {
+        return sentences
+            .map { $0.string }
+            .joined(separator: " UNION ") + ";"
     }
 }

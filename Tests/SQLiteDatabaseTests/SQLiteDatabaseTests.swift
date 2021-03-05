@@ -14,10 +14,14 @@ final class SQLiteDatabaseTests: XCTestCase {
         // results.
 //        XCTAssertEqual(SQLiteDatabase().text, "Hello, World!")
         
-        var a = SelectStatementComponents(select: ["a"], from: "b")
+        var a = Sentence(select: ["a"], from: "b")
         a.where = .init([.init("c", .equals, "d"), .init("e", .like, "f")], isAnd: true)
-        print(a.statement)
         
+        var b = a
+        b.from = "g"
+        
+        let h = SelectStatementComponents(sentences: [a, b])
+        print(h.string)
     }
 
     static var allTests = [
