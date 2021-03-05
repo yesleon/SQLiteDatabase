@@ -9,7 +9,7 @@ import Foundation
 import SQLite3
 
 public typealias RowHandler = (Row) throws -> Void
-public typealias ColumnHandler = (inout Column) throws -> Void
+public typealias ColumnHandler = (Column) throws -> Void
 
 public struct Row {
     public let forEachColumn: (ColumnHandler) throws -> Void
@@ -52,11 +52,11 @@ public struct Query {
                         do {
                             let row = Row { columnHandler in
                                 for index in 0..<columnCount {
-                                    var column = Column(
+                                    let column = Column(
                                         getName: { columns?[index].map { String(cString: $0) } },
                                         getValue: { values?[index].map { String(cString: $0) } }
                                     )
-                                    try columnHandler(&column)
+                                    try columnHandler(column)
                                 }
                             }
                             try context.rowHandler(row)
