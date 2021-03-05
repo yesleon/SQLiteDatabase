@@ -5,7 +5,7 @@
 //  Created by Li-Heng Hsu on 2021/3/5.
 //
 
-enum Operator: String {
+public enum Operator: String {
     case like = "LIKE"
     case equal = "="
 }
@@ -13,7 +13,7 @@ enum Operator: String {
 public struct Condition {
     public init(column: String, operator: Operator, text: String) {
         self.column = column
-        self.operator = operator
+        self.operator = `operator`
         self.text = text
     }
     
