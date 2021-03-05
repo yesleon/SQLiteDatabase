@@ -14,6 +14,7 @@ public struct SelectStatementComponents {
     public var `where`: String?
     public var like: String?
     public var orderBy: String?
+    public var ascending = true
     public var limit: Int?
     public var statement: String {
         var statement = ""
@@ -23,7 +24,10 @@ public struct SelectStatementComponents {
             statement += " WHERE \($0)"
             like.map { statement += " LIKE \($0)" }
         }
-        orderBy.map { statement += " ORDER BY \($0)" }
+        orderBy.map {
+            statement += " ORDER BY \($0)"
+            statement += ascending ? " ASC" : " DESC"
+        }
         limit.map { statement += " LIMIT \($0)" }
         statement += ";"
         return statement
