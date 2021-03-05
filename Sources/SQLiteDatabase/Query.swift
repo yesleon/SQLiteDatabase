@@ -16,20 +16,8 @@ public struct Row {
 }
 
 public struct Column {
-    let nameCString: UnsafeMutablePointer<Int8>?
-    let valueCString: UnsafeMutablePointer<Int8>?
-    lazy var unwrappedName: String? = nameCString.flatMap { String(cString: $0) }
-    lazy var unwrappedValue: String? = valueCString.flatMap { String(cString: $0) }
-    public var name: String? {
-        mutating get {
-            unwrappedName
-        }
-    }
-    public var value: String? {
-        mutating get {
-            unwrappedValue
-        }
-    }
+    public let getName: () -> String?
+    public let getValue: () -> String?
 }
 
 public struct Query {
@@ -65,8 +53,8 @@ public struct Query {
                             let row = Row { columnHandler in
                                 for index in 0..<columnCount {
                                     var column = Column(
-                                        nameCString: columns?[index],
-                                        valueCString: values?[index]
+                                        getName: { columns?[index].map { String(cString: $0) } },
+                                        getValue: { values?[index].map { String(cString: $0) } }
                                     )
                                     try columnHandler(&column)
                                 }
