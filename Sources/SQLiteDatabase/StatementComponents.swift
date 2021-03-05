@@ -11,17 +11,17 @@ public enum Operator: String {
 }
 
 public struct Condition {
-    public init(column: String, operator: Operator, text: String) {
+    public init(_ column: String, _ operator: Operator, _ content: String) {
         self.column = column
         self.operator = `operator`
-        self.text = text
+        self.content = content
     }
     
     var column: String
     var `operator`: Operator
-    var text: String
+    var content: String
     var string: String {
-        return [column, `operator`.rawValue, text].joined(separator: " ")
+        return [column, `operator`.rawValue, content].joined(separator: " ")
     }
 }
 
