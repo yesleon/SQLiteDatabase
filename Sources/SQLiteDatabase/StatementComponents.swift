@@ -22,4 +22,8 @@ public struct StatementComponents {
         statement += ";"
         return statement
     }
+    public init(select: String, from: String) {
+        self.select = select
+        self.from = from
+    }
 }
