@@ -5,24 +5,37 @@
 //  Created by Li-Heng Hsu on 2021/3/5.
 //
 
+enum Operator: String {
+    case like = "LIKE"
+}
 
+public struct Condition {
+    var column: String
+    var `operator`: Operator
+    var text: String
+    var string: String {
+        return [column, `operator`.rawValue, text].joined(separator: " ")
+    }
+}
 
 
 public struct SelectStatementComponents {
-    public var select: String
+    public var select: [String]
     public var from: String
-    public var `where`: String?
-    public var like: String?
+    public var `where` = [Condition]()
     public var orderBy: String?
     public var ascending = true
     public var limit: Int?
     public var statement: String {
         var statement = ""
-        statement += "SELECT \(select)"
+        
+        statement += "SELECT \(select.joined(separator: ", "))"
         statement += " FROM \(from)"
-        `where`.map {
-            statement += " WHERE \($0)"
-            like.map { statement += " LIKE \($0)" }
+        if !`where`.isEmpty {
+            statement += " WHERE"
+            `where`.forEach {
+                statement += " " + $0.string
+            }
         }
         orderBy.map {
             statement += " ORDER BY \($0)"
@@ -32,7 +45,7 @@ public struct SelectStatementComponents {
         statement += ";"
         return statement
     }
-    public init(select: String, from: String) {
+    public init(select: [String], from: String) {
         self.select = select
         self.from = from
     }
