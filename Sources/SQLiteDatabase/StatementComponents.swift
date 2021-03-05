@@ -8,7 +8,7 @@
 
 
 
-public struct StatementComponents {
+public struct SelectStatementComponents {
     public var select: String
     public var from: String
     public var `where`: String?
