@@ -20,12 +20,12 @@ public struct Column {
     let valueCString: UnsafeMutablePointer<Int8>?
     lazy var unwrappedName: String? = nameCString.flatMap { String(cString: $0) }
     lazy var unwrappedValue: String? = valueCString.flatMap { String(cString: $0) }
-    var name: String? {
+    public var name: String? {
         mutating get {
             unwrappedName
         }
     }
-    var value: String? {
+    public var value: String? {
         mutating get {
             unwrappedValue
         }
