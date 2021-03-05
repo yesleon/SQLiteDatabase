@@ -53,9 +53,10 @@ open class SQLiteDatabase {
     
     public func execute(_ statement: String) -> QueryResult {
         
-        let connection = self.connection
-        return queue.sync {
-            QueryResult { rowHandler in
+        
+        return QueryResult { [weak self] rowHandler in
+            guard let self = self else { return }
+            return try self.queue.sync {
                 var errorMessage: UnsafeMutablePointer<Int8>! = "".withCString {
                     UnsafeMutablePointer(mutating: $0)
                 }
@@ -73,7 +74,7 @@ open class SQLiteDatabase {
                 )
                 
                 let state = withUnsafeMutablePointer(to: &context) { context in
-                    return sqlite3_exec(connection, statement, { context, columnCount, values, columns in
+                    return sqlite3_exec(self.connection, statement, { context, columnCount, values, columns in
                         
                         
                         let context = context.map({ $0.load(as: Context.self) })!
@@ -108,8 +109,8 @@ open class SQLiteDatabase {
                 
                 try Error(state, message: message).map { throw $0 }
             }
-            
         }
+        
     }
 }
 
