@@ -1,27 +1,19 @@
 import XCTest
 @testable import SQLiteDatabase
 
+struct Entry: Decodable {
+    let id: Int
+    let kip_input: String
+}
+
 final class SQLiteDatabaseTests: XCTestCase {
-    let database = SQLiteDatabase(fileURL: URL(fileURLWithPath: ""))
-    
-    override func setUp() {
-        super.setUp()
-    }
     
     func testExample() {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct
         // results.
-//        XCTAssertEqual(SQLiteDatabase().text, "Hello, World!")
-        
-        var a = Sentence(select: ["a"], from: "b")
-        a.where = .init([.init("c", .equals, "d"), .init("e", .like, "f")], isAnd: true)
-        
-        var b = a
-        b.from = "g"
-        
-        let h = SelectStatement(sentences: [a, b])
-        print(h.string)
+        //        XCTAssertEqual(SQLiteDatabase().text, "Hello, World!")
+
     }
 
     static var allTests = [
