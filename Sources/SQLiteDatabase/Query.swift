@@ -8,8 +8,8 @@
 import Foundation
 import SQLite3
 
-public typealias RowHandler = (Row) throws -> Void
-public typealias ColumnHandler = (Column) throws -> Void
+public typealias RowHandler = (Row, inout Bool) throws -> Void
+public typealias ColumnHandler = (Column, inout Bool) throws -> Void
 
 public struct Row {
     public let forEachColumn: (ColumnHandler) throws -> Void
@@ -56,11 +56,14 @@ public struct Query {
                                         getName: { columns?[index].map { String(cString: $0) } },
                                         getValue: { values?[index].map { String(cString: $0) } }
                                     )
-                                    try columnHandler(column)
+                                    var shouldBreak = false
+                                    try columnHandler(column, &shouldBreak)
+                                    if shouldBreak { break }
                                 }
                             }
-                            try context.rowHandler(row)
-                            return SQLITE_OK
+                            var shouldBreak = false
+                            try context.rowHandler(row, &shouldBreak)
+                            return shouldBreak ? SQLITE_ABORT : SQLITE_OK
                         } catch {
                             context.errorHandler(error)
                             return SQLITE_ERROR
