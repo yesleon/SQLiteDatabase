@@ -29,7 +29,7 @@ struct RowKeyedDecodingContainer<Key: CodingKey>: KeyedDecodingContainerProtocol
     let allKeys: [Key]
     
     func contains(_ key: Key) -> Bool {
-        container[key.stringValue] != nil
+        container.keys.contains(key.stringValue)
     }
     
     func decodeNil(forKey key: Key) throws -> Bool {
