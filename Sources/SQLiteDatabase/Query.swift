@@ -22,6 +22,13 @@ public struct Column {
 
 public struct Query {
     public let execute: (@escaping RowHandler) throws -> Void
+    
+    public func execute<T: Decodable>(as type: T.Type, handler: @escaping (T) throws -> Void) throws {
+        try self.execute { row in
+            let value = try RowDecoder().decode(type, from: row)
+            try handler(value)
+        }
+    }
 
     public init(statement: String, in database: SQLiteDatabase?) {
 
