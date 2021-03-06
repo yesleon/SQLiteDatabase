@@ -77,6 +77,8 @@ public final class RowDecoder: TopLevelDecoder {
         let decoder = __RowDecoder(row: row, codingPath: [], userInfo: [:])
         return try T(from: decoder)
     }
+    
+    public init() { }
 }
 
 final class __RowDecoder: Decoder {
