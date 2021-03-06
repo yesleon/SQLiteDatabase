@@ -24,8 +24,10 @@ public struct Query {
     public let execute: (@escaping RowHandler) throws -> Void
     
     public func execute<T: Decodable>(as type: T.Type, handler: @escaping (T) throws -> Void) throws {
+        let decoder = RowDecoder()
         try self.execute { row in
-            let value = try RowDecoder().decode(type, from: row)
+            decoder.row = row
+            let value = try type.init(from: decoder)
             try handler(value)
         }
     }
@@ -59,9 +61,27 @@ public struct Query {
                         do {
                             let row = Row { columnHandler in
                                 for index in 0..<columnCount {
+                                    var name: String??
+                                    var value: String??
                                     let column = Column(
-                                        getName: { columns?[index].map { String(cString: $0) } },
-                                        getValue: { values?[index].map { String(cString: $0) } }
+                                        getName: {
+                                            if let name = name {
+                                                return name
+                                            } else {
+                                                let newName = columns?[index].map { String(cString: $0) }
+                                                name = newName
+                                                return newName
+                                            }
+                                        },
+                                        getValue: {
+                                            if let value = value {
+                                                return value
+                                            } else {
+                                                let newValue = values?[index].map { String(cString: $0) }
+                                                value = newValue
+                                                return newValue
+                                            }
+                                        }
                                     )
                                     try columnHandler(column)
                                 }

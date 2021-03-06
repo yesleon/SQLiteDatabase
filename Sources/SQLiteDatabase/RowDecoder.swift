@@ -6,27 +6,24 @@
 //
 import Combine
 
-struct RowKeyedDecodingContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
+class RowKeyedDecodingContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
     
-    let container: [String: () -> String?]
+    var container: [String: () -> String?] = [:]
     
+    var codingPath: [CodingKey] { [] }
     
-    init(row: Row) throws {
-        var container = [String: () -> String?]()
-        var keys = [Key]()
-        try row.forEachColumn { column in
-            guard let name = column.getName() else { return }
-            guard let key = Key(stringValue: name) else { return }
-            container[name] = column.getValue
-            keys.append(key)
-        }
-        self.container = container
-        self.allKeys = keys
+    var allKeys: [Key]  {
+        []
     }
     
-    let codingPath: [CodingKey] = []
-    
-    let allKeys: [Key]
+    func set(row: Row) throws {
+        var container = [String: () -> String?]()
+        try row.forEachColumn { column in
+            guard let name = column.getName() else { return }
+            container[name] = column.getValue
+        }
+        self.container = container
+    }
     
     func contains(_ key: Key) -> Bool {
         container.keys.contains(key.stringValue)
@@ -40,12 +37,14 @@ struct RowKeyedDecodingContainer<Key: CodingKey>: KeyedDecodingContainerProtocol
     }
     
     func decode<T: Decodable>(_ type: T.Type, forKey key: Key) throws -> T {
+        
         guard let getValue = container[key.stringValue] else {
             throw DecodingError.keyNotFound(key, DecodingError.Context(codingPath: codingPath, debugDescription: "No value associated with key \(key.debugDescription)"))
         }
         guard let value = getValue() else {
             throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: codingPath, debugDescription: "Expected \(type) value but found null instead."))
         }
+
         guard let U = T.self as? LosslessStringConvertible.Type else {
             throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: codingPath, debugDescription: "Type '\(type)' not supported."))
         }
@@ -74,35 +73,25 @@ struct RowKeyedDecodingContainer<Key: CodingKey>: KeyedDecodingContainerProtocol
     
 }
 
-public final class RowDecoder: TopLevelDecoder {
+final class RowDecoder: Decoder {
     
-    public typealias Input = Row
+    var row: Row!
     
-    public init() { }
+    var codingPath: [CodingKey] { [] }
     
-    public func decode<T: Decodable>(_ type: T.Type, from row: Row) throws -> T {
-        let decoder = __RowDecoder(row: row, userInfo: [:])
-        return try T(from: decoder)
-    }
-}
-
-final class __RowDecoder: Decoder {
-    
-    let row: Row
-    
-    let codingPath: [CodingKey] = []
-    
-    let userInfo: [CodingUserInfoKey : Any]
-    
-    init(row: Row, userInfo: [CodingUserInfoKey: Any]) {
-        self.row = row
-        self.userInfo = userInfo
-    }
+    var userInfo: [CodingUserInfoKey : Any] { [:] }
+    var containers: [String: Any] = [:]
     
     func container<Key: CodingKey>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> {
-        let container = try RowKeyedDecodingContainer<Key>(row: row)
-        
-        return KeyedDecodingContainer<Key>(container)
+        let typeName = String(describing: type)
+        if let container = containers[typeName] as? RowKeyedDecodingContainer<Key> {
+            return KeyedDecodingContainer<Key>(container)
+        } else {
+            let container = RowKeyedDecodingContainer<Key>()
+            try container.set(row: row)
+            containers[String(describing: type)] = container
+            return KeyedDecodingContainer<Key>(container)
+        }
     }
     
     func unkeyedContainer() throws -> UnkeyedDecodingContainer {
