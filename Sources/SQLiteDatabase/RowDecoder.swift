@@ -14,7 +14,7 @@ struct RowKeyedDecodingContainer<Key: CodingKey>: KeyedDecodingContainerProtocol
     init(row: Row) throws {
         var container = [String: () -> String?]()
         var keys = [Key]()
-        try row.forEachColumn { column, shouldBreak in
+        try row.forEachColumn { column in
             guard let name = column.getName() else { return }
             guard let key = Key(stringValue: name) else { return }
             container[name] = column.getValue
