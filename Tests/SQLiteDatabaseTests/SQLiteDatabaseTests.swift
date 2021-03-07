@@ -32,7 +32,7 @@ struct Entry: Decodable {
 
 final class SQLiteDatabaseTests: XCTestCase {
     
-    let database = SQLiteDatabase(fileURL: .init(fileURLWithPath: "/Users/hsuliheng/Developer/TaigiDict/TaigiDict/database.sqlite"))
+    let database = SQLiteDatabase(fileURL: .init(fileURLWithPath: ""))
     
     func testExample() throws {
         // This is an example of a functional test case.
