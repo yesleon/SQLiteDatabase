@@ -60,15 +60,13 @@ public struct Order {
 
 public struct Sentence {
     public var select: [String]
-    public var from: String?
-    public var replace: (in: String, from: String, to: String)?
+    public var from: String
     public var `where` = Where([], isAnd: false)
     public var string: String {
         var string = ""
         
         string += "SELECT \(select.joined(separator: ", "))"
-        replace.map { string += ", replace(\($0.in),'\($0.from)','\($0.to)')" }
-        from.map { string += " FROM \($0)" }
+        string += " FROM \(from)"
         string += `where`.string
         return string
     }
