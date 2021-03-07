@@ -67,7 +67,7 @@ public struct Sentence {
         var string = ""
         
         string += "SELECT \(select.joined(separator: ", "))"
-        replace.map { string += " replace(\($0.in),'\($0.from)','\($0.to)')" }
+        replace.map { string += ", replace(\($0.in),'\($0.from)','\($0.to)')" }
         from.map { string += " FROM \($0)" }
         string += `where`.string
         return string
