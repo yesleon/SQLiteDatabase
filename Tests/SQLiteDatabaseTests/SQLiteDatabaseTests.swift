@@ -32,7 +32,7 @@ struct Entry: Decodable {
 
 final class SQLiteDatabaseTests: XCTestCase {
     
-    let database = SQLiteDatabase(fileURL: .init(fileURLWithPath: "/Users/hsuliheng/Developer/TaigiDict/TaigiDict/database.sqlite"))
+    let database = SQLiteDatabase(fileURL: .init(fileURLWithPath: ""))
     
     func testExample() throws {
         // This is an example of a functional test case.
@@ -51,7 +51,7 @@ final class SQLiteDatabaseTests: XCTestCase {
         // Use XCTAssert and related functions to verify your tests produce the correct
         // results.
         //        XCTAssertEqual(SQLiteDatabase().text, "Hello, World!")
-        var sentence = Sentence(select: ["*"], from: nil)
+        var sentence = Sentence(select: ["*"], from: "")
 //        sentence.where = Where([Condition("id", .equals, "1")], isAnd: false)
         
         var statement = SelectStatement(sentences: [sentence])
