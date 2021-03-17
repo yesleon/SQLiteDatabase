@@ -1,7 +1,7 @@
 import XCTest
 @testable import SQLiteDatabase
 
-struct Entry: Decodable {
+struct Entry {
     let id: Int
     let poj_unicode: String?
     let poj_unicode_other: String?
@@ -32,70 +32,41 @@ struct Entry: Decodable {
 
 final class SQLiteDatabaseTests: XCTestCase {
     
-    let database = SQLiteDatabase(fileURL: .init(fileURLWithPath: ""))
+    let database = Database(fileURL: .init(fileURLWithPath: "/Users/hsuliheng/Developer/TaigiDict/TaigiDict/database.sqlite"), queue: .main)
     
     func testExample() throws {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct
         // results.
         //        XCTAssertEqual(SQLiteDatabase().text, "Hello, World!")
-        
-        try database.open()
-        try database.query("SELECT * FROM ;").execute(as: Entry.self) { entry in
+        let database = self.database
+        measure {
             
-        }
-    }
-    
-    func testExample2() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct
-        // results.
-        //        XCTAssertEqual(SQLiteDatabase().text, "Hello, World!")
-        var sentence = Sentence(select: ["*"], from: "")
-//        sentence.where = Where([Condition("id", .equals, "1")], isAnd: false)
-        
-        var statement = SelectStatement(sentences: [sentence])
-//        statement.limit = 1
-        
-        try database.open()
-        try database.query(statement.string).execute { row in
-            var id: String?
-            var kip_input: String?
-            var poj_unicode: String?
-            var hoabun: String?
-            do {
-                try row.forEachColumn { column in
-                    if id != nil, kip_input != nil, poj_unicode != nil, hoabun != nil {
-                        throw Abort()
-                    }
-                    switch column.getName() {
-                    case "id":
-                        id = column.getValue()
-                    case "kip_input":
-                        kip_input = column.getValue()
-                    case "poj_unicode":
-                        poj_unicode = column.getValue()
-                    case "hoabun":
-                        hoabun = column.getValue()
-                    default:
-                        break
-                    }
+            let expectation = XCTestExpectation()
+            
+            
+            database.open { error in
+                if let error = error {
+                    print(error)
+                    expectation.fulfill()
+                    return
                 }
-                if let id = id {
-                    let entry = Entry(id: Int(id)!, poj_unicode: poj_unicode, poj_unicode_other: nil, poj_input: nil, poj_input_other: nil, hanlo_taibun_poj: nil, kip_unicode: nil, kip_unicode_other: nil, kip_input: kip_input, kip_input_other: nil, hanji_taibun: nil, hanji_taibun_other: nil, hanlo_taibun_kip: nil, descriptions_poj: nil, descriptions_kip: nil, poj_kaisoeh: nil, hanlo_taibun_kaisoeh_poj: nil, hanlo_taibun_leku_poj: nil, hanlo_taibun_kaisoeh_kip: nil, hanlo_taibun_leku_kip: nil, kip_kaisoeh: nil, hoabun: hoabun, english: nil, author: nil)
+                var values = [Any]()
+                database.execute("SELECT kip_input FROM KauiokpooTaigiSutian;") { error in
+                    expectation.fulfill()
+                    
+                    if let error = error {
+                        print(error)
+                        return
+                    }
+                    print(values.count)
+                } rowHandler: { row in
+                    values.append(row[0].0!)
                 }
-            } catch is Abort {
-                
-            } catch {
-                throw error
             }
+            wait(for: [expectation], timeout: 120)
         }
+        
     }
+}
 
-    static var allTests = [
-        ("testExample", testExample),
-    ]
-}
-struct Abort: Swift.Error {
-    
-}

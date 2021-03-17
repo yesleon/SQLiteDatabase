@@ -8,18 +8,19 @@
 
 import SQLite3
 
-public struct Error: Swift.Error {
-    public let resultCode: Int32
-    public let message: String?
-    public let statement: String?
-    public init?(resultCode: Int32, message: String? = nil, statement: String? = nil) {
-        switch resultCode {
-        case SQLITE_OK, SQLITE_ROW, SQLITE_DONE:
-            return nil
-        default:
-            self.resultCode = resultCode
+extension Database {
+    
+    public enum Error: Swift.Error {
+        case databaseFailure(resultCode: Int32, message: String?, statement: String?)
+        case userError(Swift.Error, statement: String)
+       
+        public init?(resultCode: Int32, message: String? = nil, statement: String? = nil) {
+            switch resultCode {
+            case SQLITE_OK, SQLITE_ROW, SQLITE_DONE:
+                return nil
+            default:
+                self = .databaseFailure(resultCode: resultCode, message: message, statement: statement)
+            }
         }
-        self.message = message
-        self.statement = statement
     }
 }
