@@ -10,7 +10,7 @@ import SQLite3
 
 extension Database {
     
-    public struct Row {
+    public struct Row: Hashable {
         private let _columnCount: Int32
         private let _names: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?
         private let _values: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?
