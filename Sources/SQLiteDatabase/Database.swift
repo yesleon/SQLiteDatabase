@@ -89,7 +89,10 @@ public final class Database {
                 statement,
                 { rawContext, columnCount, values, columns in
                     
-                    let context = rawContext!.load(as: Context.self)
+//                    let context = rawContext!.load(as: Context.self)
+                    let opaquePointer = OpaquePointer(rawContext)
+                    let pointer = UnsafeMutablePointer<Context>(opaquePointer)
+                    let context = pointer!.pointee
                     
 //                    let row = Row(columnCount: columnCount, names: columns, values: values)
                     
