@@ -96,7 +96,7 @@ public final class Database {
                     let rowHandler = context.rowHandler
                     
 //                    let row = Row(columnCount: columnCount, names: columns, values: values)
-                    rowHandler((columnCount, columns, values))
+                    rowHandler(1)
                     return SQLITE_OK
 //                    do {
 //                        try
