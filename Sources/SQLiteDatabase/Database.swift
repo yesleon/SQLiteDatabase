@@ -86,9 +86,9 @@ public final class Database {
             let state = sqlite3_exec(
                 connection,
                 statement,
-                { context, columnCount, values, columns in
+                { rawContext, columnCount, values, columns in
                     
-                    let context = context!.load(as: Context.self)
+                    let context = rawContext!.load(as: Context.self)
                     
 //                    let row = Row(columnCount: columnCount, names: columns, values: values)
                     
