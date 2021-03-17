@@ -93,11 +93,12 @@ public final class Database {
                     let opaquePointer = OpaquePointer(rawContext)
                     let pointer = UnsafeMutablePointer<Context>(opaquePointer)
                     let context = pointer!.pointee
+                    let rowHandler = context.rowHandler
                     
 //                    let row = Row(columnCount: columnCount, names: columns, values: values)
                     
                     do {
-                        try context.rowHandler((columnCount, columns, values))
+                        try rowHandler((columnCount, columns, values))
                         return SQLITE_OK
                     } catch {
                         context.errorHandler(error)
