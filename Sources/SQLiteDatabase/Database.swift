@@ -46,6 +46,17 @@ public final class Database {
         }
     }
     
+    public func execute<Item: Decodable>(
+        _ statement: String,
+        completionHandler: @escaping CompletionHandler,
+        itemHandler: @escaping (Item) throws -> Void
+    ) {
+        self.execute(statement, completionHandler: completionHandler) { row in
+            let item = try Item(from: RowDecoder(row: row, codingPath: [], userInfo: [:]))
+            try itemHandler(item)
+        }
+    }
+    
     public func execute(
         _ statement: String,
         completionHandler: @escaping CompletionHandler,

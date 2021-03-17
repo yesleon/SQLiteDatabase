@@ -52,7 +52,7 @@ final class SQLiteDatabaseTests: XCTestCase {
                     return
                 }
                 var values = [Any]()
-                database.execute("SELECT kip_input FROM KauiokpooTaigiSutian;") { error in
+                database.execute("SELECT * FROM KauiokpooTaigiSutian;") { error in
                     expectation.fulfill()
                     
                     if let error = error {
@@ -61,7 +61,9 @@ final class SQLiteDatabaseTests: XCTestCase {
                     }
                     print(values.count)
                 } rowHandler: { row in
-                    values.append(row[0].0!)
+                    for (name, value) in row {
+//                        values.append(value)
+                    }
                 }
             }
             wait(for: [expectation], timeout: 120)
