@@ -65,56 +65,56 @@ public final class Database {
         
         queue.async { [self] in
             
-            var errorMessage: UnsafeMutablePointer<CChar>? = "".withCString { UnsafeMutablePointer(mutating: $0) }
-            
-            withUnsafeMutablePointer(to: &errorMessage) { errorMessagePointer in
+            "".withCString { emptyString in
                 
-                var userError: Swift.Error?
+                var errorMessage = Optional(UnsafeMutablePointer(mutating: emptyString))
                 
-                typealias Context = (rowHandler: RowHandler, errorHandler: (Swift.Error) -> Void)
-                
-                var context: Context = (
-                    rowHandler: rowHandler,
-                    errorHandler: { userError = $0 }
-                )
-                
-                let state = withUnsafeMutablePointer(to: &context) { contextPointer in
-                    return sqlite3_exec(
-                        connection,
-                        statement,
-                        { context, columnCount, values, columns in
-                            
-                            let context = context!.load(as: Context.self)
-                            
-                            let row = Row(columnCount: columnCount, names: columns, values: values)
-                            
-                            do {
-                                try context.rowHandler(row)
-                                return SQLITE_OK
-                            } catch {
-                                context.errorHandler(error)
-                                return SQLITE_ERROR
-                            }
-                            
-                        },
-                        contextPointer,
-                        errorMessagePointer
+                withUnsafeMutablePointer(to: &errorMessage) { errorMessagePointer in
+                    
+                    var userError: Swift.Error?
+                    
+                    typealias Context = (rowHandler: RowHandler, errorHandler: (Swift.Error) -> Void)
+                    
+                    var context: Context = (
+                        rowHandler: rowHandler,
+                        errorHandler: { userError = $0 }
                     )
-                }
-                
-                
-                
-                if let error = userError {
-                    completionHandler(.userError(error, statement: statement))
-                } else if let errorMessage = errorMessagePointer.pointee {
-                    let message = String(cString: errorMessage)
-                    completionHandler(.databaseFailure(resultCode: state, message: message, statement: statement))
-                } else {
-                    completionHandler(nil)
+                    
+                    withUnsafeMutablePointer(to: &context) { contextPointer in
+                        
+                        let state = sqlite3_exec(
+                            connection,
+                            statement,
+                            { context, columnCount, values, columns in
+                                
+                                let context = context!.load(as: Context.self)
+                                
+                                let row = Row(columnCount: columnCount, names: columns, values: values)
+                                
+                                do {
+                                    try context.rowHandler(row)
+                                    return SQLITE_OK
+                                } catch {
+                                    context.errorHandler(error)
+                                    return SQLITE_ERROR
+                                }
+                                
+                            },
+                            contextPointer,
+                            errorMessagePointer
+                        )
+                        
+                        if let error = userError {
+                            completionHandler(.userError(error, statement: statement))
+                        } else if let errorMessage = errorMessagePointer.pointee {
+                            let message = String(cString: errorMessage)
+                            completionHandler(.databaseFailure(resultCode: state, message: message, statement: statement))
+                        } else {
+                            completionHandler(nil)
+                        }
+                    }
                 }
             }
-            
-            
         }
     }
 }
