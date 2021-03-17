@@ -71,13 +71,13 @@ public final class Database {
             
             var userError: Swift.Error?
             
-            typealias Context = (rowHandler: (Any) throws -> Void, errorHandler: (Swift.Error) -> Void)
+            typealias Context = (rowHandler: (Any) -> Void, errorHandler: (Swift.Error) -> Void)
             
             var context: Context = (
                 rowHandler: { input in
                     let input = input as! (Int32, UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?, UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?)
                     let row = Row(columnCount: input.0, names: input.1, values: input.2)
-                    try rowHandler(row)
+                    try! rowHandler(row)
                 },
                 errorHandler: { userError = $0 }
             )
@@ -96,14 +96,15 @@ public final class Database {
                     let rowHandler = context.rowHandler
                     
 //                    let row = Row(columnCount: columnCount, names: columns, values: values)
-                    
-                    do {
-                        try rowHandler((columnCount, columns, values))
-                        return SQLITE_OK
-                    } catch {
-                        context.errorHandler(error)
-                        return SQLITE_ERROR
-                    }
+                    rowHandler((columnCount, columns, values))
+                    return SQLITE_OK
+//                    do {
+//                        try
+//                        return SQLITE_OK
+//                    } catch {
+//                        context.errorHandler(error)
+//                        return SQLITE_ERROR
+//                    }
                     
                 },
                 contextPointer,
