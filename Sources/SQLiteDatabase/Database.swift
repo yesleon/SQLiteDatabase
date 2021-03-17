@@ -71,14 +71,10 @@ public final class Database {
             
             var userError: Swift.Error?
             
-            typealias Context = (rowHandler: (Any) -> Void, errorHandler: (Swift.Error) -> Void)
+            typealias Context = (rowHandler: RowHandler, errorHandler: (Swift.Error) -> Void)
             
             var context: Context = (
-                rowHandler: { input in
-                    let input = input as! (Int32, UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?, UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?)
-                    let row = Row(columnCount: input.0, names: input.1, values: input.2)
-                    try! rowHandler(row)
-                },
+                rowHandler: rowHandler,
                 errorHandler: { userError = $0 }
             )
             
@@ -87,24 +83,19 @@ public final class Database {
             let state = sqlite3_exec(
                 connection,
                 statement,
-                { rawContext, columnCount, values, columns in
+                { context, columnCount, values, columns in
                     
-//                    let context = rawContext!.load(as: Context.self)
-                    let opaquePointer = OpaquePointer(rawContext)
-                    let pointer = UnsafeMutablePointer<Context>(opaquePointer)
-                    let context = pointer!.pointee
-                    let rowHandler = context.rowHandler
+                    let context = context!.load(as: Context.self)
                     
-//                    let row = Row(columnCount: columnCount, names: columns, values: values)
-                    rowHandler(1)
-                    return SQLITE_OK
-//                    do {
-//                        try
-//                        return SQLITE_OK
-//                    } catch {
-//                        context.errorHandler(error)
-//                        return SQLITE_ERROR
-//                    }
+                    let row = Row(columnCount: columnCount, names: columns, values: values)
+                    
+                    do {
+                        try context.rowHandler(row)
+                        return SQLITE_OK
+                    } catch {
+                        context.errorHandler(error)
+                        return SQLITE_ERROR
+                    }
                     
                 },
                 contextPointer,
