@@ -42,26 +42,9 @@ final class SQLiteDatabaseTests: XCTestCase {
                 
                 do {
                     try await database.open()
-                    var values = [Any]()
-//                    values = try await database.executeLazily("SELECT * FROM KauiokpooTaigiSutian;")
-                    try await database.execute2("SELECT * FROM ChhoeTaigi_KauiokpooTaigiSutian;").map { try Entry(from: RowDecoder(row: $0)) }
-                        .first.map {
-                            print($0)
-                        }
-                        
-//                        .map { try Entry(from: RowDecoder(row: $0, codingPath: [], userInfo: [:])) }
-//                        .forEach { print($0) }
-//                    for try await row in await database.execute("SELECT * FROM KauiokpooTaigiSutian;") {
-////                        for (name, value) in row {
-////                            values.append(value)
-////                        }
-//                    }
-//                    try await database.execute("SELECT * FROM KauiokpooTaigiSutian;") { row in
-//                        for (name, value) in row {
-//                            values.append(value)
-//                        }
-//                    }
-                    print(values.count)
+
+                    try await database.execute("SELECT * FROM ChhoeTaigi_KauiokpooTaigiSutian;")
+
                     expectation.fulfill()
                 } catch {
                     print(error)
