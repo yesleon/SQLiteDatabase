@@ -8,25 +8,25 @@
 
 struct RowKeyedDecodingContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
     
-    let _values: [String: String]
+    let values: [String: String]
     
     let codingPath: [CodingKey]
     
     var allKeys: [Key]  {
-        return _values.keys
+        return values.keys
             .compactMap { Key(stringValue: $0) }
     }
     
     func contains(_ key: Key) -> Bool {
-        return _values[key.stringValue] != nil
+        return values[key.stringValue] != nil
     }
     
     func decodeNil(forKey key: Key) throws -> Bool {
-         return _values[key.stringValue] == nil
+         return values[key.stringValue] == nil
     }
     
     func decode<T: Decodable>(_ type: T.Type, forKey key: Key) throws -> T {
-        guard let value = _values[key.stringValue] else {
+        guard let value = values[key.stringValue] else {
             throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Expected \(type) value but found null instead."))
         }
         
@@ -61,9 +61,9 @@ struct RowKeyedDecodingContainer<Key: CodingKey>: KeyedDecodingContainerProtocol
 }
 
 @available(macOS 10.15.0, *)
-final class RowDecoder: Decoder {
+public final class RowDecoder: Decoder {
     
-    init(row: SQLiteDatabase.Row, codingPath: [CodingKey] = [], userInfo: [CodingUserInfoKey : Any] = [:]) {
+    public init(row: SQLiteDatabase.Row, codingPath: [CodingKey] = [], userInfo: [CodingUserInfoKey : Any] = [:]) {
         self.codingPath = codingPath
         self.userInfo = userInfo
         
@@ -72,25 +72,25 @@ final class RowDecoder: Decoder {
             guard let name = name, let value = value else { continue }
             values[name] = value
         }
-        self._values = values
+        self.values = values
     }
     
-    let codingPath: [CodingKey]
+    public let codingPath: [CodingKey]
     
-    let userInfo: [CodingUserInfoKey : Any]
+    public let userInfo: [CodingUserInfoKey : Any]
     
-    let _values: [String: String]
+    private let values: [String: String]
     
-    func container<Key: CodingKey>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> {
-        let container = RowKeyedDecodingContainer<Key>(_values: _values, codingPath: [])
+    public func container<Key: CodingKey>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> {
+        let container = RowKeyedDecodingContainer<Key>(_values: values, codingPath: [])
         return .init(container)
     }
     
-    func unkeyedContainer() throws -> UnkeyedDecodingContainer {
+    public func unkeyedContainer() throws -> UnkeyedDecodingContainer {
         throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: codingPath, debugDescription: "Unkeyed value not supported."))
     }
     
-    func singleValueContainer() throws -> SingleValueDecodingContainer {
+    public func singleValueContainer() throws -> SingleValueDecodingContainer {
         throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: codingPath, debugDescription: "Single value not supported."))
     }
 }
