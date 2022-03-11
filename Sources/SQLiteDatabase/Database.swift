@@ -35,6 +35,10 @@ public actor SQLiteDatabase {
     
     private var connection: OpaquePointer?
     
+    public var isOpen: Bool {
+        connection != nil
+    }
+    
     public init(fileURL: URL) {
         self.fileURL = fileURL
     }
