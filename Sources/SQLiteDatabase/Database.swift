@@ -10,110 +10,82 @@ import Foundation
 
 
 
-public final class Database {
+@available(macOS 10.15.0, *)
+public actor SQLiteDatabase {
     
-    public typealias RowHandler = (Row) throws -> Void
-    public typealias CompletionHandler = (Error?) -> Void
+    public struct Error: Swift.Error {
+        let resultCode: Int32, message: String?, statement: String?
+       
+        init?(resultCode: Int32, message: String? = nil, statement: String? = nil) {
+            switch resultCode {
+            case SQLITE_OK, SQLITE_ROW, SQLITE_DONE:
+                return nil
+            default:
+                self.resultCode = resultCode
+                self.message = message
+                self.statement = statement
+            }
+        }
+    }
+    
+    public typealias Row = [Column]
+    public typealias Column = (name: String?, value: String?)
     
     public let fileURL: URL
     
-    private let queue: DispatchQueue
-    
     private var connection: OpaquePointer?
     
-    public var isOpened: Bool {
-        connection != nil
-    }
-    
-    public init(fileURL: URL, queue: DispatchQueue? = nil) {
+    public init(fileURL: URL) {
         self.fileURL = fileURL
-        self.queue = queue ?? DispatchQueue(label: "com.narrativesaw.SQLiteDatabase.queue", qos: .userInitiated)
     }
     
-    public func open(completionHandler: @escaping CompletionHandler) {
+    public func open() throws {
         
-        queue.async { [self] in
-            let state = sqlite3_open(fileURL.path, &connection)
-            completionHandler(Error(resultCode: state))
-        }
+        let state = sqlite3_open(fileURL.path, &connection)
+        try Error(resultCode: state).map { throw $0 }
     }
     
-    public func close(completionHandler: @escaping CompletionHandler) {
+    public func close() throws {
         
-        queue.async { [self] in
-            let state = sqlite3_close(connection)
-            completionHandler(Error(resultCode: state))
-        }
+        let state = sqlite3_close(connection)
+        try Error(resultCode: state).map { throw $0 }
     }
     
-    public func execute<Item: Decodable>(
-        _ statement: String,
-        completionHandler: @escaping CompletionHandler,
-        itemHandler: @escaping (Item) throws -> Void
-    ) {
-        self.execute(statement, completionHandler: completionHandler) { row in
-            let item = try Item(from: RowDecoder(row: row, codingPath: [], userInfo: [:]))
-            try itemHandler(item)
-        }
-    }
-    
-    public func execute(
-        _ statement: String,
-        completionHandler: @escaping CompletionHandler,
-        rowHandler: @escaping RowHandler
-    ) {
+    public func execute(_ statement: String) throws -> [Row] {
         
-        queue.async { [self] in
+        try "".withCString { emptyString in
             
-            "".withCString { emptyString in
+            var errorMessage = Optional(UnsafeMutablePointer(mutating: emptyString))
+            
+            return try withUnsafeMutablePointer(to: &errorMessage) { errorMessagePointer in
                 
-                var errorMessage = Optional(UnsafeMutablePointer(mutating: emptyString))
+                typealias RowHandler = (Row) -> Void
+                var rows = [Row]()
+                var rowHandler: RowHandler = { row in
+                    rows.append(row)
+                }
                 
-                withUnsafeMutablePointer(to: &errorMessage) { errorMessagePointer in
+                try withUnsafeMutablePointer(to: &rowHandler) { rowHandlerPointer in
                     
-                    var userError: Swift.Error?
-                    
-                    typealias Context = (rowHandler: RowHandler, errorHandler: (Swift.Error) -> Void)
-                    
-                    var context: Context = (
-                        rowHandler: rowHandler,
-                        errorHandler: { userError = $0 }
-                    )
-                    
-                    withUnsafeMutablePointer(to: &context) { contextPointer in
+                    let state = sqlite3_exec(connection, statement, { rowHandlerPointer, columnCount, values, columns in
                         
-                        let state = sqlite3_exec(
-                            connection,
-                            statement,
-                            { context, columnCount, values, columns in
-                                
-                                let context = context!.load(as: Context.self)
-                                
-                                let row = Row(columnCount: columnCount, names: columns, values: values)
-                                
-                                do {
-                                    try context.rowHandler(row)
-                                    return SQLITE_OK
-                                } catch {
-                                    context.errorHandler(error)
-                                    return SQLITE_ERROR
-                                }
-                                
-                            },
-                            contextPointer,
-                            errorMessagePointer
-                        )
+                        guard let rowHandler = rowHandlerPointer?.load(as: RowHandler.self) else { return SQLITE_ERROR }
                         
-                        if let error = userError {
-                            completionHandler(.userError(error, statement: statement))
-                        } else if let errorMessage = errorMessagePointer.pointee {
-                            let message = String(cString: errorMessage)
-                            completionHandler(.databaseFailure(resultCode: state, message: message, statement: statement))
-                        } else {
-                            completionHandler(nil)
+                        var row = Row()
+                        for index in 0..<Int(columnCount) {
+                            let name = columns?[index].map { String(cString: $0) }
+                            let value = values?[index].map { String(cString: $0) }
+                            row.append((name: name, value: value))
                         }
+                        rowHandler(row)
+                        return SQLITE_OK
+                    }, rowHandlerPointer, errorMessagePointer)
+                    
+                    if let error = Error(resultCode: state, message: errorMessagePointer.pointee.map({ String(cString: $0) }), statement: statement) {
+                        throw error
                     }
                 }
+                return rows
             }
         }
     }

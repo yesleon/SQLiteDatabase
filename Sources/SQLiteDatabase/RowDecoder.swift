@@ -60,9 +60,10 @@ struct RowKeyedDecodingContainer<Key: CodingKey>: KeyedDecodingContainerProtocol
     
 }
 
+@available(macOS 10.15.0, *)
 final class RowDecoder: Decoder {
     
-    init(row: Database.Row, codingPath: [CodingKey], userInfo: [CodingUserInfoKey : Any]) {
+    init(row: SQLiteDatabase.Row, codingPath: [CodingKey] = [], userInfo: [CodingUserInfoKey : Any] = [:]) {
         self.codingPath = codingPath
         self.userInfo = userInfo
         

@@ -1,39 +1,34 @@
 import XCTest
 @testable import SQLiteDatabase
 
-struct Entry {
-    let id: Int
-    let poj_unicode: String?
-    let poj_unicode_other: String?
-    let poj_input: String?
-    let poj_input_other: String?
-    let hanlo_taibun_poj: String?
-    let kip_unicode: String?
-    let kip_unicode_other: String?
-    let kip_input: String?
-    let kip_input_other: String?
-    let hanji_taibun: String?
-    let hanji_taibun_other: String?
-    let hanlo_taibun_kip: String?
-    let descriptions_poj: String?
-    let descriptions_kip: String?
-    let poj_kaisoeh: String?
-    let hanlo_taibun_kaisoeh_poj: String?
-    let hanlo_taibun_leku_poj: String?
-    let hanlo_taibun_kaisoeh_kip: String?
-    let hanlo_taibun_leku_kip: String?
-    let kip_kaisoeh: String?
-    let hoabun: String?
-    let english: String?
-    let author: String?
+struct Entry: Codable {
+    let DictWordID: Int?
+    let PojUnicode: String?
+    let PojUnicodeOthers: String?
+    let PojInput: String?
+    let PojInputOthers: String?
+    let KipUnicode: String?
+    let KipUnicodeOthers: String?
+    let KipInput: String?
+    let KipInputOthers: String?
+    let HanLoTaibunKip: String?
+    let KipDictHanjiTaibunOthers: String?
+    let KipDictWordProperty: String?
+    let KaisoehHanLoPoj: String?
+    let HoaBun: String?
+    let KaisoehHanLoKip: String?
+    let KipDictDialects: String?
+    let Synonym: String?
+    let Opposite: String?
 }
 
 
 
 final class SQLiteDatabaseTests: XCTestCase {
     
-    let database = Database(fileURL: .init(fileURLWithPath: "/Users/hsuliheng/Developer/TaigiDict/TaigiDict/database.sqlite"), queue: .main)
+    let database = SQLiteDatabase(fileURL: .init(fileURLWithPath: "/Users/hsuliheng/Developer/Taigi/Taigi/ChhoeTaigiDatabase/dicts.db"))
     
+    @available(iOS 13.0, *)
     func testExample() throws {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct
@@ -41,32 +36,41 @@ final class SQLiteDatabaseTests: XCTestCase {
         //        XCTAssertEqual(SQLiteDatabase().text, "Hello, World!")
         let database = self.database
         measure {
-            
             let expectation = XCTestExpectation()
-            
-            
-            database.open { error in
-                if let error = error {
-                    print(error)
-                    expectation.fulfill()
-                    return
-                }
-                var values = [Any]()
-                database.execute("SELECT * FROM KauiokpooTaigiSutian;") { error in
-                    expectation.fulfill()
-                    
-                    if let error = error {
-                        print(error)
-                        return
-                    }
+            Task {
+                
+                
+                do {
+                    try await database.open()
+                    var values = [Any]()
+//                    values = try await database.executeLazily("SELECT * FROM KauiokpooTaigiSutian;")
+                    try await database.execute2("SELECT * FROM ChhoeTaigi_KauiokpooTaigiSutian;").map { try Entry(from: RowDecoder(row: $0)) }
+                        .first.map {
+                            print($0)
+                        }
+                        
+//                        .map { try Entry(from: RowDecoder(row: $0, codingPath: [], userInfo: [:])) }
+//                        .forEach { print($0) }
+//                    for try await row in await database.execute("SELECT * FROM KauiokpooTaigiSutian;") {
+////                        for (name, value) in row {
+////                            values.append(value)
+////                        }
+//                    }
+//                    try await database.execute("SELECT * FROM KauiokpooTaigiSutian;") { row in
+//                        for (name, value) in row {
+//                            values.append(value)
+//                        }
+//                    }
                     print(values.count)
-                } rowHandler: { row in
-                    for (name, value) in row {
-//                        values.append(value)
-                    }
+                    expectation.fulfill()
+                } catch {
+                    print(error)
+                    
+                    expectation.fulfill()
                 }
             }
             wait(for: [expectation], timeout: 120)
+            
         }
         
     }
