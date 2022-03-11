@@ -82,7 +82,7 @@ public final class RowDecoder: Decoder {
     private let values: [String: String]
     
     public func container<Key: CodingKey>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> {
-        let container = RowKeyedDecodingContainer<Key>(_values: values, codingPath: [])
+        let container = RowKeyedDecodingContainer<Key>(values: values, codingPath: [])
         return .init(container)
     }
     
