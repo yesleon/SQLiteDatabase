@@ -93,7 +93,7 @@ public actor SQLiteDatabase {
         }
     }
     
-    nonisolated func publisher(for statement: String
+    nonisolated public func publisher(for statement: String
     ) -> AnyPublisher<[Row], Swift.Error> {
         
         Future { promise in

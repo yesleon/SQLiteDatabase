@@ -29,22 +29,20 @@ final class SQLiteDatabaseTests: XCTestCase {
     let database = SQLiteDatabase(fileURL: .init(fileURLWithPath: "/Users/hsuliheng/Developer/Taigi/Taigi/ChhoeTaigiDatabase/dicts.db"))
     
     @available(iOS 13.0, *)
-    func testExample() throws {
+    func testExample() async throws {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct
         // results.
         //        XCTAssertEqual(SQLiteDatabase().text, "Hello, World!")
         let database = self.database
+        
         measure {
             let expectation = XCTestExpectation()
             Task {
-                
-                
                 do {
                     try await database.open()
-
                     _ = try await database.execute("SELECT * FROM ChhoeTaigi_KauiokpooTaigiSutian;")
-
+                    try await database.close()
                     expectation.fulfill()
                 } catch {
                     print(error)
