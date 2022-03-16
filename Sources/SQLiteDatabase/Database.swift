@@ -7,10 +7,9 @@
 
 import SQLite3
 import Foundation
+import Combine
 
 
-
-@available(macOS 10.15.0, *)
 public actor SQLiteDatabase {
     
     public struct Error: Swift.Error {
@@ -92,5 +91,25 @@ public actor SQLiteDatabase {
                 return rows
             }
         }
+    }
+    
+    nonisolated func publisher(for statement: String
+    ) -> AnyPublisher<[Row], Swift.Error> {
+        
+        Future { promise in
+            Task { [weak self] in
+                guard let self = self else { return }
+                do {
+                    if await !self.isOpen {
+                        try await self.open()
+                    }
+                    let result = try await self.execute(statement)
+                    promise(.success(result))
+                } catch {
+                    promise(.failure(error))
+                }
+            }
+            
+        }.eraseToAnyPublisher()
     }
 }

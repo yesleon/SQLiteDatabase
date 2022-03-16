@@ -43,7 +43,7 @@ final class SQLiteDatabaseTests: XCTestCase {
                 do {
                     try await database.open()
 
-                    try await database.execute("SELECT * FROM ChhoeTaigi_KauiokpooTaigiSutian;")
+                    _ = try await database.execute("SELECT * FROM ChhoeTaigi_KauiokpooTaigiSutian;")
 
                     expectation.fulfill()
                 } catch {
